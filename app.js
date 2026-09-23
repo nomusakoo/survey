@@ -20,7 +20,9 @@ const MBA_COLOR = '#e8a33d'
 if (!window.SUPABASE_URL || window.SUPABASE_URL.includes('YOUR_PROJECT_REF')) {
   console.warn('[config.js] Supabase URL/키가 아직 설정되지 않았습니다. config.js를 채워주세요.')
 }
-const sb = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY)
+const sb = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY, {
+  auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+})
 
 // ============================================================
 // 상태
