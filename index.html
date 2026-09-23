@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>두 개의 자아 | 직장 vs MBA 페르소나 갭 설문</title>
+  <meta name="description" content="직장에서의 나와 MBA 수업/조별과제에서의 나, 얼마나 다른가? 실시간 결과가 반영되는 미니 설문." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- 외부 라이브러리 (모두 CDN, 설치 불필요) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="wrap">
+
+    <div class="hero">
+      <div class="hero-inner">
+        <div class="hero-eyebrow">EMBA WEEKEND SURVEY</div>
+        <h1>나는 두 개의 자아를 가지고 있는가?</h1>
+        <p>
+          평일엔 직장인, 주말엔 MBA 학생. 같은 사람이 회사에서와 강의실에서
+          얼마나 다른 태도를 보이는지, 5가지 행동으로 "자아 갭"을 측정합니다.
+        </p>
+        <div class="hero-split-label">
+          <span>직장에서의 나</span>
+          <span>MBA에서의 나</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="tabbar">
+      <button class="tab active" id="tab-btn-survey" type="button">설문 응답하기</button>
+      <button class="tab" id="tab-btn-results" type="button">실시간 결과 보기</button>
+    </div>
+
+    <div id="tab-survey"></div>
+    <div id="tab-results" class="hidden"></div>
+
+  </div>
+
+  <!-- 본인 Supabase 키 설정 -->
+  <script src="config.js"></script>
+  <!-- 앱 로직 -->
+  <script src="app.js"></script>
+</body>
+</html>
