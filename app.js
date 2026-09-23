@@ -38,6 +38,27 @@ QUESTIONS.forEach((q) => {
 
 let charts = { bar: null, radar: null, group: null }
 
+const MY_WORK_COLOR = '#c0503e'
+const MY_MBA_COLOR = '#2f7a5c'
+const MY_SUBMISSION_KEY = 'dualPersonaMySubmission'
+
+function loadMySubmission() {
+  try {
+    const raw = localStorage.getItem(MY_SUBMISSION_KEY)
+    return raw ? JSON.parse(raw) : null
+  } catch {
+    return null
+  }
+}
+
+function saveMySubmission(sub) {
+  try {
+    localStorage.setItem(MY_SUBMISSION_KEY, JSON.stringify(sub))
+  } catch {}
+}
+
+let myLastSubmission = loadMySubmission()
+
 // ============================================================
 // 탭 전환
 // ============================================================
@@ -171,6 +192,9 @@ async function handleSubmit() {
     return
   }
 
+  myLastSubmission = { jobLevel: state.jobLevel, answers: { ...state.answers } }
+  saveMySubmission(myLastSubmission)
+
   // 폼 초기화
   state.jobLevel = null
   QUESTIONS.forEach((q) => {
@@ -200,6 +224,33 @@ function computeQuestionStats(rows) {
       gap: Number((mbaAvg - workAvg).toFixed(2)),
     }
   })
+}
+
+function computeMyStats(sub) {
+  if (!sub) return null
+  const perQ = QUESTIONS.map((q) => {
+    const work = sub.answers[`work_${q.key}`]
+    const mba = sub.answers[`mba_${q.key}`]
+    return { work, mba, gap: Number((mba - work).toFixed(2)) }
+  })
+  const overallGap = Number((perQ.reduce((s, q) => s + q.gap, 0) / perQ.length).toFixed(2))
+  return { perQ, overallGap }
+}
+
+function getPersonaType(overallGap) {
+  if (overallGap >= 1.2) {
+    return { label: '완전 해방형', desc: 'MBA에 오면 딴사람이 되는 타입이에요. 회사에서 눌러둔 게 그만큼 많다는 뜻이겠죠.' }
+  }
+  if (overallGap >= 0.4) {
+    return { label: '주말 탈출형', desc: '회사보다 MBA에서 조금 더 솔직해지는, 가장 흔한 유형입니다.' }
+  }
+  if (overallGap > -0.4) {
+    return { label: '일관 유지형', desc: '회사에서나 MBA에서나 비슷한 모습을 보이는 편이에요.' }
+  }
+  if (overallGap > -1.2) {
+    return { label: '직장 자아 우세형', desc: 'MBA보다 회사에서 더 적극적인, 꽤 드문 케이스예요.' }
+  }
+  return { label: '완전 직장인형', desc: 'MBA에서도 회사 모드를 잘 못 벗어나는 타입이에요.' }
 }
 
 function computeGroupGap(rows) {
@@ -237,9 +288,29 @@ async function loadResults() {
   renderResults(rows)
 }
 
+function renderPersonaCard(myStats) {
+  const persona = getPersonaType(myStats.overallGap)
+  let maxIdx = 0
+  myStats.perQ.forEach((q, i) => {
+    if (Math.abs(q.gap) > Math.abs(myStats.perQ[maxIdx].gap)) maxIdx = i
+  })
+  const q = QUESTIONS[maxIdx]
+  const mq = myStats.perQ[maxIdx]
+  return `
+    <div class="card persona-card">
+      <h2>내 자아 유형: <span class="persona-badge">${persona.label}</span></h2>
+      <p class="persona-desc">${persona.desc}</p>
+      <div class="persona-highlight">
+        가장 큰 차이를 보인 항목은 <b>"${q.text}"</b> 였어요. (직장 ${mq.work}점 → MBA ${mq.mba}점)
+      </div>
+    </div>
+  `
+}
+
 function renderResults(rows) {
   const questionStats = computeQuestionStats(rows)
   const groupGap = computeGroupGap(rows)
+  const myStats = computeMyStats(myLastSubmission)
   const overallGap = Number(
     (questionStats.reduce((s, q) => s + q.gap, 0) / questionStats.length).toFixed(2)
   )
@@ -250,14 +321,23 @@ function renderResults(rows) {
     <div class="stat-row">
       <div class="stat-pill"><span class="live-dot" id="live-dot"></span><b>${rows.length}</b>명 응답 (실시간)</div>
       <div class="stat-pill">평균 자아 갭 <b>${overallGap > 0 ? '+' + overallGap : overallGap}</b>${gapDesc}</div>
+      ${
+        myStats
+          ? `<div class="stat-pill">내 자아 갭 <b>${myStats.overallGap > 0 ? '+' + myStats.overallGap : myStats.overallGap}</b></div>`
+          : `<div class="stat-pill">설문에 참여하면 내 유형도 볼 수 있어요</div>`
+      }
     </div>
+
+    ${myStats ? renderPersonaCard(myStats) : ''}
 
     <div class="card">
       <h2>문항별 직장 vs MBA 평균</h2>
-      <div class="chart-caption">같은 질문에 대해 "직장에서"와 "MBA에서" 응답한 평균 점수를 나란히 비교합니다.</div>
+      <div class="chart-caption">같은 질문에 대해 "직장에서"와 "MBA에서" 응답한 평균 점수를 나란히 비교합니다.${myStats ? ' 굵은 테두리 점은 내 응답입니다.' : ''}</div>
       <div class="legend-row">
-        <span><span class="legend-dot" style="background:${WORK_COLOR}"></span>직장</span>
-        <span><span class="legend-dot" style="background:${MBA_COLOR}"></span>MBA</span>
+        <span><span class="legend-dot" style="background:${WORK_COLOR}"></span>직장 평균</span>
+        <span><span class="legend-dot" style="background:${MBA_COLOR}"></span>MBA 평균</span>
+        ${myStats ? `<span><span class="legend-dot ring" style="border-color:${MY_WORK_COLOR}"></span>내 직장</span>` : ''}
+        ${myStats ? `<span><span class="legend-dot ring" style="border-color:${MY_MBA_COLOR}"></span>내 MBA</span>` : ''}
       </div>
       <div class="chart-box"><canvas id="chart-bar"></canvas></div>
     </div>
@@ -304,23 +384,51 @@ function renderResults(rows) {
     </div>
   `
 
-  drawCharts(questionStats, groupGap)
+  drawCharts(questionStats, groupGap, myStats)
 }
 
-function drawCharts(questionStats, groupGap) {
+function drawCharts(questionStats, groupGap, myStats) {
   if (charts.bar) charts.bar.destroy()
   if (charts.radar) charts.radar.destroy()
   if (charts.group) charts.group.destroy()
+
+  const barDatasets = [
+    { label: '직장 평균', data: questionStats.map((q) => q.workAvg), backgroundColor: WORK_COLOR, borderRadius: 4 },
+    { label: 'MBA 평균', data: questionStats.map((q) => q.mbaAvg), backgroundColor: MBA_COLOR, borderRadius: 4 },
+  ]
+
+  if (myStats) {
+    const pointDatasetBase = {
+      type: 'line',
+      showLine: false,
+      backgroundColor: '#fff',
+      pointBorderWidth: 2.5,
+      pointRadius: 6,
+      pointHoverRadius: 7,
+      pointStyle: 'circle',
+    }
+    barDatasets.push({
+      ...pointDatasetBase,
+      label: '내 직장',
+      data: myStats.perQ.map((q) => q.work),
+      borderColor: MY_WORK_COLOR,
+      pointBorderColor: MY_WORK_COLOR,
+    })
+    barDatasets.push({
+      ...pointDatasetBase,
+      label: '내 MBA',
+      data: myStats.perQ.map((q) => q.mba),
+      borderColor: MY_MBA_COLOR,
+      pointBorderColor: MY_MBA_COLOR,
+    })
+  }
 
   const barCtx = document.getElementById('chart-bar')
   charts.bar = new Chart(barCtx, {
     type: 'bar',
     data: {
       labels: questionStats.map((q) => q.shortLabel),
-      datasets: [
-        { label: '직장', data: questionStats.map((q) => q.workAvg), backgroundColor: WORK_COLOR, borderRadius: 4 },
-        { label: 'MBA', data: questionStats.map((q) => q.mbaAvg), backgroundColor: MBA_COLOR, borderRadius: 4 },
-      ],
+      datasets: barDatasets,
     },
     options: {
       maintainAspectRatio: false,

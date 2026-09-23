@@ -350,6 +350,40 @@ a {
   margin-right: 6px;
 }
 
+.legend-dot.ring {
+  background: #fff;
+  border: 2.5px solid;
+  border-radius: 50%;
+  width: 7px;
+  height: 7px;
+}
+
+/* ---------- Persona card ---------- */
+.persona-card {
+  background: linear-gradient(120deg, rgba(27,35,51,0.05), rgba(232,163,61,0.1));
+}
+
+.persona-badge {
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+.persona-desc {
+  font-size: 14.5px;
+  color: var(--ink-muted);
+  line-height: 1.6;
+  margin: 0 0 14px;
+}
+
+.persona-highlight {
+  font-size: 13.5px;
+  color: var(--ink);
+  background: rgba(255,255,255,0.7);
+  border-radius: 8px;
+  padding: 10px 14px;
+  border: 1px dashed var(--line);
+}
+
 /* ---------- About section ---------- */
 .about h3 {
   font-family: var(--font-display);
